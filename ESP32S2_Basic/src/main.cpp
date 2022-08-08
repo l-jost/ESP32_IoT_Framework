@@ -35,8 +35,8 @@
 #include "utils.h"
 
 
-#define LED               33
-#define BLINK_INTERVAL    3000
+#define LED               42
+#define BLINK_INTERVAL    200
 #define WATCHDOG_TIMEOUT  10    // [s]
 
 Utils utils;
@@ -45,14 +45,16 @@ void setup()
 {
   pinMode(LED, OUTPUT);
   console.begin();
-  if(!utils.begin(0 /*WATCHDOG_TIMEOUT*/, "DRIVE"))
+  if(!utils.begin(WATCHDOG_TIMEOUT, "DRIVE"))
   {
     console.error.println("[MAIN] Could not initialize utilities");
   }
   
-  console.log.println("OK, Let's go");
-  console.log.print("SSID: "); console.log.println(utils.getSsid());
-  console.log.print("Password: "); console.log.println(utils.getPassword());
+  // Program crashes if stuff gets printed to console imediately after utils.begin... why?!!
+  
+  //console.log.println("OK, Let's go");
+  //console.log.print("SSID: "); console.log.println(utils.getSsid());
+  //console.log.print("Password: "); console.log.println(utils.getPassword());
 }
 
 void loop()
@@ -60,7 +62,7 @@ void loop()
   utils.feedWatchdog();
  
   static int t = 0;
-  if(millis() - t > 5000)
+  if(millis() - t > 1000)
   {
     t = millis();
     console.log.printf("Time: %d\n", t);

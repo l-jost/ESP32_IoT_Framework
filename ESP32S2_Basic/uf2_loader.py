@@ -293,7 +293,7 @@ class UF2Loader:
 
 
 if __name__ == "__main__":
-    loader = UF2Loader()
+    loader = UF2Loader("ESP32S2", 0)
     status = loader.download(".pio/build/esp32-s2-saola-1/firmware.bin")
     print(f"Status: {status}")
     
