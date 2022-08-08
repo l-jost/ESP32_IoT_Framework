@@ -49,12 +49,10 @@ void setup()
   {
     console.error.println("[MAIN] Could not initialize utilities");
   }
-  
-  // Program crashes if stuff gets printed to console imediately after utils.begin... why?!!
-  
-  //console.log.println("OK, Let's go");
-  //console.log.print("SSID: "); console.log.println(utils.getSsid());
-  //console.log.print("Password: "); console.log.println(utils.getPassword());
+
+  console.log.println("OK, Let's go");
+  console.log.print("SSID: "); console.log.println(utils.getSsid());
+  console.log.print("Password: "); console.log.println(utils.getPassword());
 }
 
 void loop()
