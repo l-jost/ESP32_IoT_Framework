@@ -11,6 +11,7 @@
         "*.tcc": "cpp",
         "random": "cpp",
         "sdkconfig.h": "c",
-        "tusb_option.h": "c"
+        "tusb_option.h": "c",
+        "wiring_private.h": "c"
     }
 }
