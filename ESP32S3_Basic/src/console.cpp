@@ -188,7 +188,7 @@ void Console::printStartupMessage(void)
   stream.print(CONSOLE_CLEAR);
   stream.print(CONSOLE_COLOR_BOLD_CYAN CONSOLE_BACKGROUND_DEFAULT);
   stream.println("****************************************************");
-  stream.println("*                  ESP32-OTA-Update                *");
+  stream.println("*                   ESP32-S3 Basic                 *");
   stream.println("*             2022, Florian Baumgartner            *");
   stream.println("****************************************************");
   stream.println(CONSOLE_LOG);
