@@ -30,6 +30,7 @@
 #include "esp32-hal.h"
 #include "esp32-hal-tinyusb.h"
 #include "common/tusb_common.h"
+#include "StreamString.h"
 #include "esp_private/system_internal.h"    // Needed for UF2-Bootloader hint: esp_reset_reason_set_hint()
 
 #ifndef USB_VID
@@ -173,6 +174,15 @@ ESPUSB::~ESPUSB(){
 
 bool ESPUSB::begin(){
     if(!_started){
+#if CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+        if(serial_number == "__MAC__"){
+            StreamString s;
+            uint8_t m[6];
+            esp_efuse_mac_get_default(m);
+            s.printf("%02X%02X%02X%02X%02X%02X", m[0], m[1], m[2], m[3], m[4], m[5]);
+            serial_number = s;
+        }
+#endif
         tinyusb_device_config_t tinyusb_device_config = {
                 .vid = vid,
                 .pid = pid,
