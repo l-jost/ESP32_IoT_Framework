@@ -36,13 +36,13 @@
 
 import ast
 import sys
+import time
 import threading
 import subprocess
 import win32gui
 from pathlib import Path
 from serial_console import Console
 from tendo.singleton import SingleInstance, SingleInstanceException
-
 
 DEBUG = False
 
@@ -110,11 +110,6 @@ class Terminal:
             availablePorts.sort(key=lambda x: x.ser)
             portsToOpen.sort(key=lambda x: x.ser)
             self.portsBeingOpened = [p for p in self.portsBeingOpened if p not in openPorts]
-
-            if(self.vsCode and not vsCodeRunning):
-                if DEBUG:
-                    print("Virtual Studio Code is not running -> terminating")
-                self.runThread = False
             
             if(not self.runThread):
                 break
@@ -129,9 +124,11 @@ class Terminal:
                 print(f"Available ports: {[i.port for i in portsToOpen]}")
                 print(f"New ports to open: {[i.port for i in portsToOpen]}") 
                 print(f"Ports that are being opened: {self.portsBeingOpened}")    
+                print(f"Visual Studio Code State: {vsCodeRunning}")
+                print("\n")
                 
             
-            scriptPath = Path.cwd() / "serial_console.py"
+            scriptPath = Path(__file__).parent.resolve() / "serial_console.py"
             processResult = []
             try:
                 if self.USE_TABS:
@@ -151,6 +148,13 @@ class Terminal:
             except FileNotFoundError:
                 print("Please Install Windows Terminal: https://docs.microsoft.com/en-us/windows/terminal")
                 self.runThread = False
+                
+            if(self.vsCode and not vsCodeRunning):
+                if DEBUG:
+                    print("Virtual Studio Code is not running -> terminating")
+                self.runThread = False
+            
+            time.sleep(0.1)
 
 
 
@@ -161,7 +165,7 @@ if __name__ == '__main__':
     usb_vid = 0x239A
     usb_pid = 0x80AB
     usb_serial = ["0", "1", "2"]
-    vsCode = False
+    vsCode = True
     
     if(len(sys.argv) >= 7):
         vsCode = True
@@ -187,5 +191,7 @@ if __name__ == '__main__':
         while terminal.runThread:
             time.sleep(0.1)
     except KeyboardInterrupt:
+        pass
+    finally:
         terminal.stop()
     
