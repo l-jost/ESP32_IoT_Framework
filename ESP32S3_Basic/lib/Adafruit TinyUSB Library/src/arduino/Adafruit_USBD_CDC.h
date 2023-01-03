@@ -27,7 +27,14 @@
 
 #include "Adafruit_TinyUSB_API.h"
 
-#if defined(__cplusplus) && !defined(ARDUINO_ARCH_ESP32)
+#if defined(__cplusplus)
+
+#if defined(ARDUINO_ARCH_ESP32)
+
+// For ESP32 use USBCDC as it is compatible
+#define Adafruit_USBD_CDC USBCDC
+
+#else
 
 #include "Adafruit_USBD_Interface.h"
 #include "Stream.h"
@@ -38,7 +45,7 @@ public:
 
   static uint8_t getInstanceCount(void);
 
-  // fron Adafruit_USBD_Interface
+  // from Adafruit_USBD_Interface
   virtual uint16_t getInterfaceDescriptor(uint8_t itfnum, uint8_t *buf,
                                           uint16_t bufsize);
 
@@ -96,5 +103,7 @@ extern Adafruit_USBD_CDC Serial;
 extern Adafruit_USBD_CDC SerialTinyUSB;
 #endif
 
+#endif // else of ESP32
 #endif // __cplusplus
+
 #endif
