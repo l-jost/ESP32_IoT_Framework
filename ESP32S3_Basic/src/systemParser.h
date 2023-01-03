@@ -44,8 +44,6 @@ class SystemParser {
   uint16_t getUsbVid(void);
   uint16_t getUsbPid(void);
   const char* getUsbSerial(void);
-  const char* getSsid(void);
-  const char* getPassword(void);
 
  private:
   StaticJsonDocument<MAX_SYSTEM_FILE_SIZE> doc;

@@ -109,34 +109,6 @@ const char* SystemParser::getUsbSerial(void)
 }
 
 /**
- * @brief Get the name of the access point
- *
- * @return const char* with the name
- */
-const char* SystemParser::getSsid(void)
-{
-  if(doc.containsKey("ssid"))
-  {
-    return doc["ssid"].as<const char*>();
-  }
-  return "";
-}
-
-/**
- * @brief get the password of the access point
- *
- * @return const char* with the password
- */
-const char* SystemParser::getPassword(void)
-{
-  if(doc.containsKey("password"))
-  {
-    return doc["password"].as<const char*>();
-  }
-  return "";
-}
-
-/**
  * @brief Save the current loaded system config as a file
  *
  * @param path to location

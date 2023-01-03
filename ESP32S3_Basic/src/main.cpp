@@ -51,8 +51,6 @@ void setup()
   }
 
   console.log.println("OK, Let's go");
-  console.log.print("SSID: "); console.log.println(utils.getSsid());
-  console.log.print("Password: "); console.log.println(utils.getPassword());
 }
 
 void loop()

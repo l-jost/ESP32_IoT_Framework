@@ -101,8 +101,6 @@ bool Utils::begin(uint32_t watchdogTimeout, const char* labelName, bool forceFor
     {
       serial = systemParser.getUsbSerial();
     }
-    ssid = systemParser.getSsid();
-    password = systemParser.getPassword();
     console.ok.println("[UTILS] System config loading was successful.");
   }
   else

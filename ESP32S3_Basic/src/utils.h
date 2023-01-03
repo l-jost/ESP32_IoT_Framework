@@ -55,15 +55,11 @@ class Utils
     bool isConnected(void);
     bool format(const char* labelName);
     inline const char* getSerialNumber(void) {return serial;}
-    inline const char* getSsid(void) {return ssid;}
-    inline const char* getPassword(void) {return password;}
     operator bool() const {return mscReady;}
 
   private:
     const char* configFileName;
     const char* serial = "0";
-    const char* ssid = nullptr;
-    const char* password = nullptr;
     volatile bool mscReady = false;
 
     static void update(void* pvParameter);
