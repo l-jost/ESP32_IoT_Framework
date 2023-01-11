@@ -26,25 +26,25 @@
 
 #include "tusb_option.h"
 
-#if CFG_TUD_ENABLED && !defined(ARDUINO_ARCH_ESP32)
+#if CFG_TUD_ENABLED
 
+#include "device/dcd.h"
 #include "tusb.h"
 #include "common/tusb_private.h"
 
 #include "device/usbd.h"
 #include "device/usbd_pvt.h"
-#include "device/dcd.h"
 
 //--------------------------------------------------------------------+
 // USBD Configuration
 //--------------------------------------------------------------------+
 
-// Debug level of USBD
-#define USBD_DBG   2
-
 #ifndef CFG_TUD_TASK_QUEUE_SZ
   #define CFG_TUD_TASK_QUEUE_SZ   16
 #endif
+
+// Debug level of USBD
+#define USBD_DBG   2
 
 //--------------------------------------------------------------------+
 // Device Data
@@ -272,10 +272,12 @@ static uint8_t _usbd_rhport = RHPORT_INVALID;
 OSAL_QUEUE_DEF(usbd_int_set, _usbd_qdef, CFG_TUD_TASK_QUEUE_SZ, dcd_event_t);
 static osal_queue_t _usbd_q;
 
-// Mutex for claiming endpoint, only needed when using with preempted RTOS
-#if CFG_TUSB_OS != OPT_OS_NONE
-static osal_mutex_def_t _ubsd_mutexdef;
-static osal_mutex_t _usbd_mutex;
+// Mutex for claiming endpoint
+#if OSAL_MUTEX_REQUIRED
+  static osal_mutex_def_t _ubsd_mutexdef;
+  static osal_mutex_t _usbd_mutex;
+#else
+  #define _usbd_mutex   NULL
 #endif
 
 
@@ -316,7 +318,7 @@ void usbd_driver_print_control_complete_name(usbd_control_xfer_cb_t callback)
   for (uint8_t i = 0; i < TOTAL_DRIVER_COUNT; i++)
   {
     usbd_class_driver_t const * driver = get_driver(i);
-    if ( driver->control_xfer_cb == callback )
+    if ( driver && driver->control_xfer_cb == callback )
     {
       TU_LOG(USBD_DBG, "  %s control complete\r\n", driver->name);
       return;
@@ -389,7 +391,7 @@ bool tud_init (uint8_t rhport)
 
   tu_varclr(&_usbd_dev);
 
-#if CFG_TUSB_OS != OPT_OS_NONE
+#if OSAL_MUTEX_REQUIRED
   // Init device mutex
   _usbd_mutex = osal_mutex_create(&_ubsd_mutexdef);
   TU_ASSERT(_usbd_mutex);
@@ -409,6 +411,7 @@ bool tud_init (uint8_t rhport)
   for (uint8_t i = 0; i < TOTAL_DRIVER_COUNT; i++)
   {
     usbd_class_driver_t const * driver = get_driver(i);
+    TU_ASSERT(driver);
     TU_LOG(USBD_DBG, "%s init\r\n", driver->name);
     driver->init();
   }
@@ -426,7 +429,9 @@ static void configuration_reset(uint8_t rhport)
 {
   for ( uint8_t i = 0; i < TOTAL_DRIVER_COUNT; i++ )
   {
-    get_driver(i)->reset(rhport);
+    usbd_class_driver_t const * driver = get_driver(i);
+    TU_ASSERT(driver, );
+    driver->reset(rhport);
   }
 
   tu_varclr(&_usbd_dev);
@@ -501,7 +506,11 @@ void tud_task_ext(uint32_t timeout_ms, bool in_isr)
       break;
 
       case DCD_EVENT_SETUP_RECEIVED:
-        TU_LOG_VAR(USBD_DBG, &event.setup_received);
+// FIXME arduino-esp32 takes time to upgrade tinyusb
+#ifndef TU_LOG_PTR
+#define TU_LOG_PTR  TU_LOG_VAR
+#endif
+        TU_LOG_PTR(USBD_DBG, &event.setup_received);
         TU_LOG(USBD_DBG, "\r\n");
 
         // Mark as connected after receiving 1st setup packet.
@@ -735,7 +744,7 @@ static bool process_control_request(uint8_t rhport, tusb_control_request_t const
           // Device status bit mask
           // - Bit 0: Self Powered
           // - Bit 1: Remote Wakeup enabled
-          uint16_t status = (_usbd_dev.self_powered ? 1 : 0) | (_usbd_dev.remote_wakeup_en ? 2 : 0);
+          uint16_t status = (uint16_t) ((_usbd_dev.self_powered ? 1u : 0u) | (_usbd_dev.remote_wakeup_en ? 2u : 0u));
           tud_control_xfer(rhport, p_request, &status, 2);
         }
         break;
@@ -867,8 +876,8 @@ static bool process_set_config(uint8_t rhport, uint8_t cfg_num)
   TU_ASSERT(desc_cfg != NULL && desc_cfg->bDescriptorType == TUSB_DESC_CONFIGURATION);
 
   // Parse configuration descriptor
-  _usbd_dev.remote_wakeup_support = (desc_cfg->bmAttributes & TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP) ? 1 : 0;
-  _usbd_dev.self_powered          = (desc_cfg->bmAttributes & TUSB_DESC_CONFIG_ATT_SELF_POWERED ) ? 1 : 0;
+  _usbd_dev.remote_wakeup_support = (desc_cfg->bmAttributes & TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP) ? 1u : 0u;
+  _usbd_dev.self_powered          = (desc_cfg->bmAttributes & TUSB_DESC_CONFIG_ATT_SELF_POWERED ) ? 1u : 0u;
 
   // Parse interface descriptor
   uint8_t const * p_desc   = ((uint8_t const*) desc_cfg) + sizeof(tusb_desc_configuration_t);
@@ -895,11 +904,12 @@ static bool process_set_config(uint8_t rhport, uint8_t cfg_num)
     tusb_desc_interface_t const * desc_itf = (tusb_desc_interface_t const*) p_desc;
 
     // Find driver for this interface
-    uint16_t const remaining_len = desc_end-p_desc;
+    uint16_t const remaining_len = (uint16_t) (desc_end-p_desc);
     uint8_t drv_id;
     for (drv_id = 0; drv_id < TOTAL_DRIVER_COUNT; drv_id++)
     {
       usbd_class_driver_t const *driver = get_driver(drv_id);
+      TU_ASSERT(driver);
       uint16_t const drv_len = driver->open(rhport, desc_itf, remaining_len);
 
       if ( (sizeof(tusb_desc_interface_t) <= drv_len)  && (drv_len <= remaining_len) )
@@ -1101,7 +1111,7 @@ TU_ATTR_FAST_FUNC void dcd_event_handler(dcd_event_t const * event, bool in_isr)
       for (uint8_t i = 0; i < TOTAL_DRIVER_COUNT; i++)
       {
         usbd_class_driver_t const * driver = get_driver(i);
-        if (driver->sof)
+        if (driver && driver->sof)
         {
           driver->sof(event->rhport, event->sof.frame_count);
         }
@@ -1205,11 +1215,7 @@ bool usbd_edpt_claim(uint8_t rhport, uint8_t ep_addr)
   uint8_t const dir         = tu_edpt_dir(ep_addr);
   tu_edpt_state_t* ep_state = &_usbd_dev.ep_status[epnum][dir];
 
-#if TUSB_OPT_MUTEX
   return tu_edpt_claim(ep_state, _usbd_mutex);
-#else
-  return tu_edpt_claim(ep_state, NULL);
-#endif
 }
 
 bool usbd_edpt_release(uint8_t rhport, uint8_t ep_addr)
@@ -1220,11 +1226,7 @@ bool usbd_edpt_release(uint8_t rhport, uint8_t ep_addr)
   uint8_t const dir         = tu_edpt_dir(ep_addr);
   tu_edpt_state_t* ep_state = &_usbd_dev.ep_status[epnum][dir];
 
-#if TUSB_OPT_MUTEX
   return tu_edpt_release(ep_state, _usbd_mutex);
-#else
-  return tu_edpt_release(ep_state, NULL);
-#endif
 }
 
 bool usbd_edpt_xfer(uint8_t rhport, uint8_t ep_addr, uint8_t * buffer, uint16_t total_bytes)
