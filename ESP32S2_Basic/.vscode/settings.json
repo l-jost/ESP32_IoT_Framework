@@ -11,6 +11,8 @@
         "*.tcc": "cpp",
         "random": "cpp",
         "sdkconfig.h": "c",
-        "tusb_option.h": "c"
+        "tusb_option.h": "c",
+        "istream": "cpp",
+        "ostream": "cpp"
     }
 }
