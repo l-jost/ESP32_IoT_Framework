@@ -58,6 +58,20 @@ env.Replace(
     UPLOADCMD="executable -arg1 -arg2 $SOURCE"
 )
 
+def post_build_action(source, target, env):
+    mcu_type = env.GetProjectOption("board_build.mcu").upper()
+    loader = UF2Loader(mcu_type)
+    firmware_path = str(target[0]).rsplit('.', 1)[0] + ".bin"   #.get_abspath())
+    firmwareFilePathUf2 = firmware_path.rsplit('.', 1)[0] + ".UF2"
+    if DEBUG:
+        print(f"MCU Type: {mcu_type}")
+        print(f"Firmware binary path: {firmware_path}")
+        print(f"Firmware UF2 path: {firmwareFilePathUf2}")
+
+    loader.save(firmware_path, firmwareFilePathUf2)
+    print("Firmware binary file has been converted to UF2 format")
+
+
 # Python callback
 def on_upload(source, target, env):
     print("\n************************** Custom Upload Script ********************************")
@@ -81,16 +95,17 @@ def on_upload(source, target, env):
     use_tabs_console = getParameterString("USE_TABS_CONSOLE").lower() == "true"
     serial_number_list = ast.literal_eval(getParameterString("SERIAL_NUMBER_LIST"))
 
-    firmware_path = str(source[0])
     loader = UF2Loader(mcu_type)
     dfu = DFU_Reboot()
+    firmware_path = str(source[0])
+    firmwareFilePathUf2 = firmware_path.rsplit('.', 1)[0] + ".UF2"
      
     if DEBUG:
         print(f"USB_SERIAL: {usb_serial}, USB_VID: {usb_vid:04X}, USB_PID: {usb_pid:04X}, COMPARE_SERIAL_NUMBER: {compare_Serial}")
         print(f"USE_SERIAL_NUMBER_LIST: {use_serial_number_list}, SERIAL_NUMBER_LIST: {serial_number_list}, ENABLE_AUTOMATIC_CONSOLE: {enable_automatic_console}, COMPARE_VID_PID_CONSOLE: {compare_vid_pid_console}, USE_TABS_CONSOLE: {use_tabs_console}")
         print(f"firmware_path: {firmware_path}")
         print(firmware_path)
-        print(firmware_path.rsplit('.', 1)[0] + ".UF2")
+        print(firmwareFilePathUf2)
     
     if(use_serial_number_list):
         usb_serial = serial_number_list
@@ -103,9 +118,6 @@ def on_upload(source, target, env):
             res = subprocess.Popen(command, close_fds=True, creationflags=CREATE_NO_WINDOW, shell = True)
         else:
             print("Windows Terminal is not availavle on other OS")
-        
-    firmwareFilePath = firmware_path.rsplit('.', 1)[0] + ".UF2"
-    loader.save(firmware_path, firmwareFilePath)
 
     availableDrives = loader.get_drives()
     if not availableDrives:
@@ -138,7 +150,7 @@ def on_upload(source, target, env):
         drives = loader.get_drives()
         if(drives):
             print("\nFlashing %s (%s)" % (drives[0], loader.board_id(drives[0])), end = "")
-            shutil.copyfile(firmwareFilePath, drives[0] + "/NEW.UF2")
+            shutil.copyfile(firmwareFilePathUf2, drives[0] + "/NEW.UF2")
             print(" -> OK", end = "")
             uploadCount += 1
             t = time.time()
@@ -158,4 +170,8 @@ def on_upload(source, target, env):
     # return ["My error"]   # Error
     
 
+# env.AddPostAction("$PROGPATH", post_build_action)     # This does not work, since the binary file is created after the post build script is called.
 env.Replace(UPLOADCMD=on_upload)
+
+
+
