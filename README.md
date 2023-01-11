@@ -5,8 +5,9 @@ Support of multi-board programming (with explicit serial number compare).
 Further, USB Settings (such as VID, PID, Serial Number) can be freely choosen.
 
 * __ESP32S2_Basic__ <br />
-  Fully working condiction
-  
+  Fully working condiction <br />
+  TODO: Update File System Libraries to newest version <br />
+  TODO: Fix Warning ("CFG_TUD_VENDOR" redefined)
 
 * __ESP32S3_Basic__ <br />
   Fully working condiction
