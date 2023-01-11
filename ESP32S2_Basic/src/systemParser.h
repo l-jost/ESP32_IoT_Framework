@@ -41,11 +41,11 @@ class SystemParser {
  public:
   SystemParser(void);
   bool loadFile(const char* path);
-  uint16_t getUsbVid(void);
-  uint16_t getUsbPid(void);
-  const char* getUsbSerial(void);
-  const char* getSsid(void);
-  const char* getPassword(void);
+  bool getUsbVid(uint16_t& vid);
+  bool getUsbPid(uint16_t& pid);
+  bool getUsbSerial(char* usbSerial, size_t size);
+  bool getSsid(char* ssid, size_t size);
+  bool getPassword(char* password, size_t size);
 
  private:
   StaticJsonDocument<MAX_SYSTEM_FILE_SIZE> doc;
