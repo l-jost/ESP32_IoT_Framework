@@ -68,44 +68,90 @@ bool SystemParser::loadFile(const char* path) {
 
 /**
  * @brief Get the USB Vender Identifier
- *
- * @return uin16_t with the USB VID
+ * 
+ * @param vid uint16_t reference to the USB VID
+ * @return true on success
+ * @return false on error
  */
-uint16_t SystemParser::getUsbVid(void)
+bool SystemParser::getUsbVid(uint16_t& vid)
 {
   if(doc.containsKey("usb_vid"))
   {
-    return (uint16_t)strtol(doc["usb_vid"].as<const char*>(), NULL, 0);
+    vid = (uint16_t)strtol(doc["usb_vid"].as<const char*>(), NULL, 0);
+    return true;
   }
-  return -1;
+  return false;
 }
 
 /**
  * @brief Get the USB Product Identifier
- *
- * @return uin16_t with the USB PID
+ * 
+ * @param pid uint16_t reference to the USB PID
+ * @return true on success
+ * @return false on error
  */
-uint16_t SystemParser::getUsbPid(void)
+bool SystemParser::getUsbPid(uint16_t& pid)
 {
   if(doc.containsKey("usb_pid"))
   {
-    return (uint16_t)strtol(doc["usb_pid"].as<const char*>(), NULL, 0);
+    pid = (uint16_t)strtol(doc["usb_pid"].as<const char*>(), NULL, 0);
+    return true;
   }
-  return -1;
+  return false;
 }
 
 /**
  * @brief Get the USB Serial Number
- *
- * @return const char* with the serial number as string
+ * 
+ * @param usbSerial const char* with the serial number
+ * @param size max number of characters
+ * @return true on success
+ * @return false on error
  */
-const char* SystemParser::getUsbSerial(void)
+bool SystemParser::getUsbSerial(char* usbSerial, size_t size)
 {
   if(doc.containsKey("usb_serial"))
   {
-    return doc["usb_serial"].as<const char*>();
+    strncpy(usbSerial, doc["usb_serial"].as<const char*>(), size);
+    return true;
   }
-  return "";
+  return false;
+}
+
+/**
+ * @brief Get the name of the access point
+ * 
+ * @param usbSerial const char* with the name
+ * @param size max number of characters
+ * @return true on success
+ * @return false on error
+ */
+bool SystemParser::getSsid(char* ssid, size_t size)
+{
+  if(doc.containsKey("ssid"))
+  {
+    strncpy(ssid, doc["ssid"].as<const char*>(), size);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * @brief Get the password of the access point
+ * 
+ * @param usbSerial const char* with the password
+ * @param size max number of characters
+ * @return true on success
+ * @return false on error
+ */
+bool SystemParser::getPassword(char* password, size_t size)
+{
+  if(doc.containsKey("password"))
+  {
+    strncpy(password, doc["password"].as<const char*>(), size);
+    return true;
+  }
+  return false;
 }
 
 /**

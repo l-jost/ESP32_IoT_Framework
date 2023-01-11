@@ -64,6 +64,7 @@ class UF2Loader:
             'ATMEGA32': 0x16573617,
             'MIMXRT10XX': 0x4FB2D5BD,
             'ESP32S2': 0xBFDD4EEE,
+            'ESP32S3': 0xC47E5767,
         }
 
         self.args = Namespace(

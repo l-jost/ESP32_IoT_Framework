@@ -32,6 +32,8 @@
 
 Import("env")
 
+import os
+import sys
 import ast
 import time
 import glob
@@ -41,7 +43,7 @@ from packet_installer import installPackages
 from uf2_loader import UF2Loader
 from dfu_reboot import DFU_Reboot
 
-DEBUG = False
+DEBUG = True
 
 # please keep $SOURCE variable, it will be replaced with a path to firmware
 
@@ -59,11 +61,8 @@ env.Replace(
 # Python callback
 def on_upload(source, target, env):
     print("\n************************** Custom Upload Script ********************************")
-    # installPackages()
+    mcu_type = env.GetProjectOption("board_build.mcu").upper()
     arguments = env.GetProjectOption("upload_flags")
-    firmware_path = str(source[0])
-    loader = UF2Loader()
-    dfu = DFU_Reboot()
     
     def getParameterString(keyword):
         paramStr = ";" + ";".join(arguments)
@@ -81,6 +80,10 @@ def on_upload(source, target, env):
     compare_vid_pid_console = getParameterString("COMPARE_VID_PID_CONSOLE").lower() == "true"
     use_tabs_console = getParameterString("USE_TABS_CONSOLE").lower() == "true"
     serial_number_list = ast.literal_eval(getParameterString("SERIAL_NUMBER_LIST"))
+
+    firmware_path = str(source[0])
+    loader = UF2Loader(mcu_type)
+    dfu = DFU_Reboot()
      
     if DEBUG:
         print(f"USB_SERIAL: {usb_serial}, USB_VID: {usb_vid:04X}, USB_PID: {usb_pid:04X}, COMPARE_SERIAL_NUMBER: {compare_Serial}")
@@ -93,10 +96,13 @@ def on_upload(source, target, env):
         usb_serial = serial_number_list
     
     if(enable_automatic_console):
-        command = ["python", "serial_terminal.py"]
-        command += [str(use_tabs_console), str(compare_vid_pid_console), str(compare_Serial), str(usb_vid), str(usb_pid), str(usb_serial)]
-        CREATE_NO_WINDOW = 0x08000000
-        subprocess.Popen(command, close_fds=True, creationflags=CREATE_NO_WINDOW, shell = True)
+        if sys.platform.startswith('win'):
+            command = ["cd", "tools", "&&", "python", "serial_terminal.py"]
+            command += [str(use_tabs_console), str(compare_vid_pid_console), str(compare_Serial), str(usb_vid), str(usb_pid), str(usb_serial)]
+            CREATE_NO_WINDOW = 0x08000000
+            res = subprocess.Popen(command, close_fds=True, creationflags=CREATE_NO_WINDOW, shell = True)
+        else:
+            print("Windows Terminal is not availavle on other OS")
         
     firmwareFilePath = firmware_path.rsplit('.', 1)[0] + ".UF2"
     loader.save(firmware_path, firmwareFilePath)
