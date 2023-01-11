@@ -43,7 +43,7 @@ from packet_installer import installPackages
 from uf2_loader import UF2Loader
 from dfu_reboot import DFU_Reboot
 
-DEBUG = True
+DEBUG = False
 
 # please keep $SOURCE variable, it will be replaced with a path to firmware
 

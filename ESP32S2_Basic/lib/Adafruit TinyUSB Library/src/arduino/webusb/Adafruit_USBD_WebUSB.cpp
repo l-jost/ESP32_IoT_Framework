@@ -29,6 +29,10 @@
 #include "Adafruit_USBD_WebUSB.h"
 #include "Arduino.h"
 
+#ifdef ARDUINO_ARCH_ESP32
+#include "USB.h"
+#endif
+
 //--------------------------------------------------------------------+
 // MACRO TYPEDEF CONSTANT ENUM DECLARATION
 //--------------------------------------------------------------------+
@@ -124,7 +128,6 @@ TU_VERIFY_STATIC(sizeof(desc_ms_os_20) == MS_OS_20_DESC_LEN, "Incorrect size");
 #ifdef ARDUINO_ARCH_ESP32
 static uint16_t webusb_load_descriptor(uint8_t *dst, uint8_t *itf) {
   // uint8_t str_index = tinyusb_add_string_descriptor("TinyUSB MSC");
-  uint8_t str_index = 0;
 
   uint8_t ep_in = tinyusb_get_free_in_endpoint();
   uint8_t ep_out = tinyusb_get_free_out_endpoint();
@@ -239,6 +242,10 @@ int Adafruit_USBD_WebUSB::read(void) {
   return tud_vendor_read(&ch, 1) ? (int)ch : -1;
 }
 
+size_t Adafruit_USBD_WebUSB::read(uint8_t *buffer, size_t size) {
+  return tud_vendor_read(buffer, size);
+}
+
 size_t Adafruit_USBD_WebUSB::write(uint8_t b) { return this->write(&b, 1); }
 
 size_t Adafruit_USBD_WebUSB::write(const uint8_t *buffer, size_t size) {
@@ -262,7 +269,7 @@ int Adafruit_USBD_WebUSB::peek(void) {
   return tud_vendor_peek(&ch) ? (int)ch : -1;
 }
 
-void Adafruit_USBD_WebUSB::flush(void) {}
+void Adafruit_USBD_WebUSB::flush(void) { tud_vendor_flush(); }
 
 //--------------------------------------------------------------------+
 // TinyUSB stack callbacks
