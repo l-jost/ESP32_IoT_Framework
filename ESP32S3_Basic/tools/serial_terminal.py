@@ -108,6 +108,7 @@ class Terminal:
                     continue
                 self.portsBeingOpened.append(p.port)
                 portsToOpen.append(p)
+                time.sleep(1.0)
             availablePorts.sort(key=lambda x: x.ser)
             portsToOpen.sort(key=lambda x: x.ser)
             self.portsBeingOpened = [p for p in self.portsBeingOpened if p not in openPorts]
